@@ -115,7 +115,7 @@ describe('Task.toJSON', () => {
   it('returns a plain object with all required keys', () => {
     const task = new Task('Buy groceries', { description: 'Milk and bread', status: 'todo', priority: 'low' });
     const json = task.toJSON();
-    assert.deepEqual(Object.keys(json).sort(), ['createdAt', 'description', 'id', 'priority', 'status', 'title', 'updatedAt'].sort());
+    assert.deepEqual(Object.keys(json).sort(), ['category', 'createdAt', 'description', 'id', 'priority', 'status', 'title', 'updatedAt'].sort());
   });
 
   it('values in toJSON match the instance properties', () => {
@@ -126,6 +126,7 @@ describe('Task.toJSON', () => {
     assert.equal(json.description, task.description);
     assert.equal(json.status, task.status);
     assert.equal(json.priority, task.priority);
+    assert.equal(json.category, task.category);
     assert.equal(json.createdAt, task.createdAt);
     assert.equal(json.updatedAt, task.updatedAt);
   });

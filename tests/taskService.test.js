@@ -6,6 +6,7 @@ import {
   getTaskById,
   updateTask,
   deleteTask,
+  filterByCategory,
   clearTasks,
 } from '../src/services/taskService.js';
 
@@ -22,12 +23,13 @@ describe('addTask', () => {
     assert.equal(task.description, '');
     assert.equal(task.status, 'todo');
     assert.equal(task.priority, 'medium');
+    assert.equal(task.category, 'general');
   });
 
   it('returns a plain object with all required keys', () => {
     const task = addTask({ title: 'Key check' });
     const keys = Object.keys(task).sort();
-    assert.deepEqual(keys, ['createdAt', 'description', 'id', 'priority', 'status', 'title', 'updatedAt'].sort());
+    assert.deepEqual(keys, ['category', 'createdAt', 'description', 'id', 'priority', 'status', 'title', 'updatedAt'].sort());
   });
 
   it('assigns a unique id to each task', () => {
@@ -48,6 +50,12 @@ describe('addTask', () => {
     assert.equal(task.description, 'Desc');
     assert.equal(task.status, 'done');
     assert.equal(task.priority, 'high');
+    assert.equal(task.category, 'general');
+  });
+
+  it('accepts custom category', () => {
+    const task = addTask({ title: 'Work task', category: 'work' });
+    assert.equal(task.category, 'work');
   });
 
   it('returns a copy — mutating the result does not affect the store', () => {
@@ -487,5 +495,89 @@ describe('taskService — concurrent-style modifications', () => {
     snapshot.push({ id: 'fake', title: 'Injected' });
     assert.equal(getTasks().length, 1);
     assert.equal(getTasks()[0].title, 'Real');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// getTasks — filter by category
+// ---------------------------------------------------------------------------
+describe('getTasks — filter by category', () => {
+  it('returns only tasks matching the requested category', () => {
+    addTask({ title: 'Work 1', category: 'work' });
+    addTask({ title: 'Personal 1', category: 'personal' });
+    const results = getTasks({ category: 'work' });
+    assert.equal(results.length, 1);
+    assert.equal(results[0].title, 'Work 1');
+  });
+
+  it('returns an empty array when no tasks match the category', () => {
+    addTask({ title: 'T', category: 'work' });
+    assert.deepEqual(getTasks({ category: 'personal' }), []);
+  });
+
+  it('filters by category (case-sensitive)', () => {
+    addTask({ title: 'T', category: 'Work' });
+    assert.deepEqual(getTasks({ category: 'work' }), []);
+    assert.equal(getTasks({ category: 'Work' }).length, 1);
+  });
+
+  it('throws TypeError for an invalid category with special characters', () => {
+    assert.throws(() => getTasks({ category: 'work@home' }), TypeError);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// filterByCategory
+// ---------------------------------------------------------------------------
+describe('filterByCategory', () => {
+  it('returns only tasks matching the category', () => {
+    addTask({ title: 'Work 1', category: 'work' });
+    addTask({ title: 'Work 2', category: 'work' });
+    addTask({ title: 'Personal', category: 'personal' });
+    const results = filterByCategory('work');
+    assert.equal(results.length, 2);
+    assert.equal(results[0].title, 'Work 1');
+    assert.equal(results[1].title, 'Work 2');
+  });
+
+  it('returns an empty array when no tasks have the category', () => {
+    addTask({ title: 'T', category: 'work' });
+    assert.deepEqual(filterByCategory('shopping'), []);
+  });
+
+  it('returns all "general" tasks when that category is requested', () => {
+    addTask({ title: 'Task without category' });
+    addTask({ title: 'Task with explicit general', category: 'general' });
+    addTask({ title: 'Work task', category: 'work' });
+    const results = filterByCategory('general');
+    assert.equal(results.length, 2);
+  });
+
+  it('throws TypeError for invalid category format', () => {
+    assert.throws(() => filterByCategory('invalid@'), TypeError);
+    assert.throws(() => filterByCategory('a'.repeat(51)), TypeError);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// getTasks — combined filters with category
+// ---------------------------------------------------------------------------
+describe('getTasks — combined filters with category', () => {
+  it('combines status and category filters', () => {
+    addTask({ title: 'Work todo', category: 'work', status: 'todo' });
+    addTask({ title: 'Work done', category: 'work', status: 'done' });
+    addTask({ title: 'Personal todo', category: 'personal', status: 'todo' });
+    const results = getTasks({ status: 'todo', category: 'work' });
+    assert.equal(results.length, 1);
+    assert.equal(results[0].title, 'Work todo');
+  });
+
+  it('combines priority and category filters', () => {
+    addTask({ title: 'Work high', category: 'work', priority: 'high' });
+    addTask({ title: 'Work low', category: 'work', priority: 'low' });
+    addTask({ title: 'Personal high', category: 'personal', priority: 'high' });
+    const results = getTasks({ priority: 'high', category: 'work' });
+    assert.equal(results.length, 1);
+    assert.equal(results[0].title, 'Work high');
   });
 });

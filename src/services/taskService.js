@@ -4,6 +4,7 @@ import {
   validateDescription,
   validateStatus,
   validatePriority,
+  validateCategory,
   validateId,
   validateSort,
 } from '../utils/validators.js';
@@ -15,8 +16,8 @@ const PRIORITY_ORDER = { low: 0, medium: 1, high: 2 };
 
 /**
  * Adds a new task to the in-memory store.
- * @param {{ title: string, description?: string, status?: string, priority?: string }} fields
- * @returns {{ id: string, title: string, description: string, status: string, priority: string, createdAt: string, updatedAt: string }}
+ * @param {{ title: string, description?: string, status?: string, priority?: string, category?: string }} fields
+ * @returns {{ id: string, title: string, description: string, status: string, priority: string, category: string, createdAt: string, updatedAt: string }}
  * @throws {TypeError} If required fields are missing or any field value is invalid.
  */
 export function addTask(fields) {
@@ -24,6 +25,7 @@ export function addTask(fields) {
     description: fields.description,
     status: fields.status,
     priority: fields.priority,
+    category: fields.category,
   });
   tasks.push(task);
   return { ...task.toJSON() };
@@ -31,11 +33,11 @@ export function addTask(fields) {
 
 /**
  * Returns all tasks, with optional filtering and sorting.
- * @param {{ status?: string, priority?: string, sortBy?: string }} [options]
- * @returns {Array<{ id: string, title: string, description: string, status: string, priority: string, createdAt: string, updatedAt: string }>}
+ * @param {{ status?: string, priority?: string, category?: string, sortBy?: string }} [options]
+ * @returns {Array<{ id: string, title: string, description: string, status: string, priority: string, category: string, createdAt: string, updatedAt: string }>}
  * @throws {TypeError} If any filter or sort value is invalid.
  */
-export function getTasks({ status, priority, sortBy } = {}) {
+export function getTasks({ status, priority, category, sortBy } = {}) {
   let result = tasks.map(t => ({ ...t.toJSON() }));
 
   if (status !== undefined) {
@@ -46,6 +48,11 @@ export function getTasks({ status, priority, sortBy } = {}) {
   if (priority !== undefined) {
     const normalised = validatePriority(priority);
     result = result.filter(t => t.priority === normalised);
+  }
+
+  if (category !== undefined) {
+    const normalised = validateCategory(category);
+    result = result.filter(t => t.category === normalised);
   }
 
   if (sortBy !== undefined) {
@@ -77,8 +84,8 @@ export function getTaskById(id) {
 /**
  * Updates an existing task by ID with the provided fields.
  * @param {string} id - The task UUID.
- * @param {{ title?: string, description?: string, status?: string, priority?: string }} fields
- * @returns {{ id: string, title: string, description: string, status: string, priority: string, createdAt: string, updatedAt: string }}
+ * @param {{ title?: string, description?: string, status?: string, priority?: string, category?: string }} fields
+ * @returns {{ id: string, title: string, description: string, status: string, priority: string, category: string, createdAt: string, updatedAt: string }}
  * @throws {TypeError} If id or any supplied field value is invalid.
  * @throws {Error} If no task with that ID exists.
  */
@@ -91,6 +98,7 @@ export function updateTask(id, fields) {
   if (fields.description !== undefined) task.description = validateDescription(fields.description);
   if (fields.status !== undefined) task.status = validateStatus(fields.status);
   if (fields.priority !== undefined) task.priority = validatePriority(fields.priority);
+  if (fields.category !== undefined) task.category = validateCategory(fields.category);
   task.updatedAt = new Date().toISOString();
 
   return { ...task.toJSON() };
@@ -109,6 +117,16 @@ export function deleteTask(id) {
   if (index === -1) throw new Error(`Task ${validId} not found`);
   const [task] = tasks.splice(index, 1);
   return { ...task.toJSON() };
+}
+
+/**
+ * Filters tasks by category.
+ * @param {string} category - The category to filter by.
+ * @returns {Array<{ id: string, title: string, description: string, status: string, priority: string, category: string, createdAt: string, updatedAt: string }>}
+ * @throws {TypeError} If category is invalid.
+ */
+export function filterByCategory(category) {
+  return getTasks({ category });
 }
 
 /**

@@ -11,6 +11,7 @@
 | `description` | `string`                            | No       | Defaults to `""`; max 500 characters after trim                     |
 | `status`      | `"todo" \| "in-progress" \| "done"` | Yes      | Defaults to `"todo"` on create; case-insensitive input, stored lowercase |
 | `priority`    | `"low" \| "medium" \| "high"`       | Yes      | Defaults to `"medium"` on create; case-insensitive input, stored lowercase |
+| `category`    | `string`                            | No       | Defaults to `"general"`; max 50 characters; alphanumeric + dash/underscore only |
 | `createdAt`   | `string` (ISO 8601)                 | Yes      | Set once at creation via `new Date().toISOString()`; never mutated  |
 | `updatedAt`   | `string` (ISO 8601)                 | Yes      | Matches `createdAt` on creation; refreshed on every update          |
 
@@ -49,6 +50,15 @@
 - Defaults to `"medium"` when not supplied on `add`.
 - On `update`, omitting it leaves the existing value unchanged.
 - All other strings and non-string types are rejected.
+
+#### `category`
+- Optional on `add` and `update`; defaults to `"general"` when not supplied.
+- When supplied, trimmed before validation.
+- Maximum 50 characters (measured after trim).
+- Accepted characters: alphanumeric (a–z, A–Z, 0–9), dash (`-`), underscore (`_`).
+- Custom categories like `"work"`, `"personal"`, `"urgent"`, `"shopping"` are all allowed.
+- Case is preserved as-supplied (not normalised to lowercase).
+- Non-string types and strings with disallowed characters are rejected.
 
 #### `createdAt`
 - Set exactly once by `store.addTask` using `new Date().toISOString()`.
@@ -152,6 +162,7 @@ Exports:
 | `validateDescription` | `(value: unknown) => Result`     | Optional; ≤ 500 chars if provided         |
 | `validateStatus`    | `(value: unknown) => Result`       | Must be `todo`, `in-progress`, or `done`  |
 | `validatePriority`  | `(value: unknown) => Result`       | Must be `low`, `medium`, or `high`        |
+| `validateCategory`  | `(value: unknown) => Result`       | Optional; max 50 chars; alphanumeric+dash+underscore only |
 | `validateId`        | `(value: unknown) => Result`       | Must be a positive integer (not NaN)      |
 | `validateSort`      | `(value: unknown) => Result`       | Must be `priority` or `date`              |
 
@@ -181,7 +192,7 @@ export default function add(flags) { … }
 ```
 
 Flow: `validateTitle` → `validateDescription` (optional) → `validatePriority`
-(optional) → `store.addTask` → write confirmation to stdout.
+(optional) → `validateCategory` (optional) → `store.addTask` → write confirmation to stdout.
 
 **Depends on:** `store.js`, `lib/validate.js`.
 
@@ -195,8 +206,8 @@ Exports a single default function:
 export default function list(flags) { … }
 ```
 
-Flow: optional `validateStatus` / `validatePriority` / `validateSort` →
-`store.getTasks` → filter → sort → `format.formatTable` → stdout.
+Flow: optional `validateStatus` / `validatePriority` / `validateCategory` / `validateSort` →
+`store.getTasks` → filter (by status, priority, and category) → sort → `format.formatTable` → stdout.
 
 **Depends on:** `store.js`, `lib/validate.js`, `lib/format.js`.
 
@@ -221,7 +232,7 @@ On missing ID: stderr + `process.exit(1)`.
 export default function update(id, flags) { … }
 ```
 
-Flow: `validateId` → validate each supplied flag → `store.updateTask` → print
+Flow: `validateId` → validate each supplied flag (title, description, status, priority, category) → `store.updateTask` → print
 changed fields to stdout.
 
 **Depends on:** `store.js`, `lib/validate.js`.

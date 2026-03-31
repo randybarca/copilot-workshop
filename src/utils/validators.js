@@ -1,6 +1,7 @@
 const VALID_STATUSES = ['todo', 'in-progress', 'done'];
 const VALID_PRIORITIES = ['low', 'medium', 'high'];
 const VALID_SORT_FIELDS = ['priority', 'date'];
+const CATEGORY_REGEX = /^[a-zA-Z0-9_-]+$/;
 
 /**
  * Validates and normalises a task title.
@@ -81,6 +82,27 @@ export function validateId(value) {
     throw new TypeError('id must be a non-empty string');
   }
   return value.trim();
+}
+
+/**
+ * Validates a task category.
+ * @param {unknown} value - The value to validate.
+ * @returns {string} The trimmed category, or 'general' if not provided.
+ * @throws {TypeError} If value is not a string, exceeds 50 chars, or contains invalid characters.
+ * @example validateCategory('work') // => 'work'
+ * @example validateCategory('personal-2024') // => 'personal-2024'
+ * @example validateCategory(undefined) // => 'general'
+ */
+export function validateCategory(value) {
+  if (value === undefined || value === null) return 'general';
+  if (typeof value !== 'string') throw new TypeError('category must be a string');
+  const trimmed = value.trim();
+  if (trimmed.length === 0) return 'general';
+  if (trimmed.length > 50) throw new TypeError('category must be 50 characters or fewer');
+  if (!CATEGORY_REGEX.test(trimmed)) {
+    throw new TypeError('category must contain only alphanumeric, dash, and underscore characters');
+  }
+  return trimmed;
 }
 
 /**

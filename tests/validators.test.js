@@ -5,6 +5,7 @@ import {
   validateDescription,
   validateStatus,
   validatePriority,
+  validateCategory,
   validateId,
   validateSort,
 } from '../src/utils/validators.js';
@@ -349,5 +350,78 @@ describe('validateSort — edge cases', () => {
 
   it('throws TypeError for undefined', () => {
     assert.throws(() => validateSort(undefined), TypeError);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// validateCategory
+// ---------------------------------------------------------------------------
+describe('validateCategory', () => {
+  it('returns trimmed category for a valid string', () => {
+    assert.equal(validateCategory('  work  '), 'work');
+  });
+
+  it('returns "general" when value is undefined', () => {
+    assert.equal(validateCategory(undefined), 'general');
+  });
+
+  it('returns "general" when value is null', () => {
+    assert.equal(validateCategory(null), 'general');
+  });
+
+  it('returns "general" when value is a whitespace-only string', () => {
+    assert.equal(validateCategory('   '), 'general');
+  });
+
+  it('accepts a category of exactly 50 characters', () => {
+    const category = 'a'.repeat(50);
+    assert.equal(validateCategory(category), category);
+  });
+
+  it('accepts categories with alphanumeric and dash/underscore', () => {
+    assert.equal(validateCategory('work-2024'), 'work-2024');
+    assert.equal(validateCategory('personal_todo'), 'personal_todo');
+    assert.equal(validateCategory('urgent_work-2024'), 'urgent_work-2024');
+  });
+
+  it('throws TypeError when value is not a string', () => {
+    assert.throws(() => validateCategory(42), TypeError);
+    assert.throws(() => validateCategory(true), TypeError);
+    assert.throws(() => validateCategory([]), TypeError);
+  });
+
+  it('throws TypeError for a category exceeding 50 characters', () => {
+    assert.throws(() => validateCategory('a'.repeat(51)), TypeError);
+  });
+
+  it('throws TypeError for a category with invalid characters', () => {
+    assert.throws(() => validateCategory('work@home'), TypeError);
+    assert.throws(() => validateCategory('personal#1'), TypeError);
+    assert.throws(() => validateCategory('urgent!'), TypeError);
+    assert.throws(() => validateCategory('work.2024'), TypeError);
+    assert.throws(() => validateCategory('task/home'), TypeError);
+  });
+
+  it('preserves case as supplied', () => {
+    assert.equal(validateCategory('Work'), 'Work');
+    assert.equal(validateCategory('PERSONAL'), 'PERSONAL');
+    assert.equal(validateCategory('MiXeD_CaSe'), 'MiXeD_CaSe');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Edge cases — validateCategory type mismatches
+// ---------------------------------------------------------------------------
+describe('validateCategory — edge cases', () => {
+  it('throws TypeError for boolean true', () => {
+    assert.throws(() => validateCategory(true), TypeError);
+  });
+
+  it('throws TypeError for boolean false', () => {
+    assert.throws(() => validateCategory(false), TypeError);
+  });
+
+  it('throws TypeError for an object', () => {
+    assert.throws(() => validateCategory({}), TypeError);
   });
 });

@@ -4,19 +4,20 @@
 
 A command-line Task Manager application built with Node.js 20+ and zero
 external dependencies. Users can create, list, update, delete, filter, and
-sort tasks entirely from the terminal. All task data is held in an in-process
-array (no database or file I/O), making the application self-contained and
-easy to extend. The project is intentionally scoped as a single-session
-workshop exercise that demonstrates core Node.js patterns: modular design,
-structured data manipulation, and a clean CLI interface using only built-in
-modules.
+sort tasks entirely from the terminal. Tasks support optional categories (e.g.,
+"work", "personal", "urgent") for better organization and filtering. All task
+data is held in an in-process array (no database or file I/O), making the
+application self-contained and easy to extend. The project is intentionally
+scoped as a single-session workshop exercise that demonstrates core Node.js
+patterns: modular design, structured data manipulation, and a clean CLI
+interface using only built-in modules.
 
 ---
 
 ## 2. User Stories
 
 1. **Create a task**
-   - As a user, I can run `node src/index.js add --title "..." --description "..." --priority low|medium|high` to create a new task.
+   - As a user, I can run `node src/index.js add --title "..." --description "..." --priority low|medium|high --category "..."` to create a new task.
    - Acceptance criteria:
      - Task is assigned a unique numeric ID (auto-increment).
      - `status` defaults to `todo`.
@@ -69,7 +70,22 @@ modules.
      - The CLI prints a confirmation with the deleted task's title.
      - If the ID does not exist, the CLI prints an error and exits with code 1.
 
-9. **Display help**
+9. **Assign a category to a task**
+   - As a user, I can assign an optional category (e.g., "work", "personal", "urgent") when creating or updating a task.
+   - Acceptance criteria:
+     - Category is a string; max 50 characters.
+     - If no category is specified, it defaults to `"general"`.
+     - Category can be updated independently of other task fields.
+     - The `create` and `update` commands accept `--category "..."` flag.
+
+10. **Filter tasks by category**
+   - As a user, I can run `node src/index.js list --category "..."` to see only tasks in a specific category.
+   - Acceptance criteria:
+     - Only tasks whose `category` matches the filter are shown.
+     - Filter can be combined with `--status`, `--priority`, and `--sort`.
+     - If no tasks match, the CLI prints "No tasks found."
+
+11. **Display help**
    - As a user, I can run `node src/index.js --help` to see all available commands and flags.
    - Acceptance criteria:
      - Help text lists every command with a short description and example.
@@ -87,6 +103,7 @@ modules.
 | `description` | `string`                              | Optional; defaults to empty string         |
 | `status`      | `"todo" \| "in-progress" \| "done"`   | Required; defaults to `"todo"` on create   |
 | `priority`    | `"low" \| "medium" \| "high"`         | Required; defaults to `"medium"` on create |
+| `category`    | `string`                              | Optional; defaults to `"general"`; max 50 chars |
 | `createdAt`   | `string` (ISO 8601)                   | Set once at creation; never mutated        |
 | `updatedAt`   | `string` (ISO 8601)                   | Refreshed on every update                  |
 
@@ -136,7 +153,7 @@ Phase 3.
    object `{ command, id, flags }` using only string manipulation (no
    `minimist`).
 3. Create `src/lib/validate.js` with pure functions that reject invalid
-   `status`, `priority`, and empty `title` values, returning `{ ok, error }`.
+   `status`, `priority`, `category`, and empty `title` values, returning `{ ok, error }`.
 4. Create `src/index.js` that reads the parsed command and calls a stub
    function from each command module (each stub just logs its name).
 5. Verify the skeleton runs without errors: `node src/index.js --help`.
@@ -181,6 +198,8 @@ built-in `assert` and the `node:test` runner (Node.js 18+).
    (missing flags, unknown commands, numeric ID coercion).
 4. Create `test/commands.test.js` — integration-style tests that call command
    modules with a pre-populated store and assert stdout via a captured write.
+4. Add tests for category validation (max 50 chars, alphanumeric + underscore/dash)
+   and category filtering (empty, nonexistent, multiple matches).
 5. Run the suite: `node --test`.
 
 **Exit criterion:** `node --test` reports zero failing tests.
