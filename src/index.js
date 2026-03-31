@@ -5,6 +5,16 @@ import {
   updateTask,
   deleteTask,
 } from './services/taskService.js';
+import { colorStatus, colorPriority } from './utils/colors.js';
+
+/**
+ * Formats a task for CLI output with colored status and priority.
+ * @param {{ title: string, status: string, priority: string }} task
+ * @returns {string} A formatted task line.
+ */
+function formatTask(task) {
+  return `  [${colorPriority(task.priority)}] ${task.title} - ${colorStatus(task.status)}`;
+}
 
 // ── Create tasks ─────────────────────────────────────────────────────────────
 
@@ -41,7 +51,7 @@ console.log('Created:', t4);
 console.log('\n=== All tasks ===');
 const all = getTasks();
 console.log(`Total tasks: ${all.length}`);
-all.forEach(t => console.log(`  [${t.priority.toUpperCase()}] ${t.title} — ${t.status}`));
+all.forEach(t => console.log(formatTask(t)));
 
 // ── Filter by status ──────────────────────────────────────────────────────────
 
@@ -59,7 +69,7 @@ highTasks.forEach(t => console.log(`  ${t.title}`));
 
 console.log('\n=== Sort by priority ===');
 const byPriority = getTasks({ sortBy: 'priority' });
-byPriority.forEach(t => console.log(`  [${t.priority}] ${t.title}`));
+byPriority.forEach(t => console.log(formatTask(t)));
 
 // ── Sort by creation date ─────────────────────────────────────────────────────
 
@@ -84,7 +94,7 @@ console.log(`updatedAt changed: ${updated.updatedAt !== t1.updatedAt}`);
 
 console.log('\n=== In-progress tasks sorted by priority ===');
 const inProgress = getTasks({ status: 'in-progress', sortBy: 'priority' });
-inProgress.forEach(t => console.log(`  [${t.priority}] ${t.title}`));
+inProgress.forEach(t => console.log(formatTask(t)));
 
 // ── Delete a task ─────────────────────────────────────────────────────────────
 
